@@ -1,0 +1,367 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened]
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+  DOTNET_VERSION: '6.0.x'
+
+jobs:
+  # Validate PR title and description
+  validate-pr:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check PR title format
+      run: |
+        PR_TITLE="${{ github.event.pull_request.title }}"
+        echo "PR Title: $PR_TITLE"
+        
+        # Check if title follows conventional commit format
+        if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\(.+\))?: .+ ]]; then
+          echo "❌ PR title should follow conventional commit format:"
+          echo "   feat: add new feature"
+          echo "   fix: fix bug"
+          echo "   docs: update documentation"
+          echo "   etc."
+          exit 1
+        fi
+        
+        echo "✅ PR title format is valid"
+    
+    - name: Check PR description
+      run: |
+        PR_BODY="${{ github.event.pull_request.body }}"
+        
+        if [ -z "$PR_BODY" ] || [ ${#PR_BODY} -lt 20 ]; then
+          echo "❌ PR description is too short. Please provide a meaningful description."
+          exit 1
+        fi
+        
+        echo "✅ PR description is adequate"
+
+  # Check for breaking changes
+  breaking-changes:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Check for breaking changes in APIs
+      run: |
+        echo "Checking for potential breaking changes..."
+        
+        # Check Python API changes
+        if git diff --name-only origin/main...HEAD | grep -q "packages/sdk-python/src/direct_method_mqtt/client.py"; then
+          echo "⚠️  Python API file modified - please review for breaking changes"
+          git diff origin/main...HEAD packages/sdk-python/src/direct_method_mqtt/client.py
+        fi
+        
+        # Check Node.js API changes
+        if git diff --name-only origin/main...HEAD | grep -q "packages/sdk-node/src/DirectMethodMqttClient.ts"; then
+          echo "⚠️  Node.js API file modified - please review for breaking changes"
+          git diff origin/main...HEAD packages/sdk-node/src/DirectMethodMqttClient.ts
+        fi
+        
+        # Check .NET API changes
+        if git diff --name-only origin/main...HEAD | grep -q "packages/sdk-dotnet/src/DirectMethod.Mqtt.Client/DirectMethodMqttClient.cs"; then
+          echo "⚠️  .NET API file modified - please review for breaking changes"
+          git diff origin/main...HEAD packages/sdk-dotnet/src/DirectMethod.Mqtt.Client/DirectMethodMqttClient.cs
+        fi
+        
+        echo "✅ Breaking change check completed"
+
+  # Build all packages
+  build-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Build Node.js package
+      run: |
+        cd packages/sdk-node
+        npm ci
+        npm run build
+        echo "✅ Node.js package builds successfully"
+    
+    - name: Build Python package
+      run: |
+        cd packages/sdk-python
+        python -m pip install --upgrade pip build
+        python -m build
+        echo "✅ Python package builds successfully"
+    
+    - name: Build .NET package
+      run: |
+        cd packages/sdk-dotnet
+        dotnet restore
+        dotnet build --configuration Release
+        echo "✅ .NET package builds successfully"
+
+  # Code quality and formatting
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        cd packages/sdk-node && npm ci
+        python -m pip install --upgrade pip black isort mypy types-paho-mqtt
+    
+    - name: Check TypeScript formatting and types
+      run: |
+        cd packages/sdk-node
+        npx tsc --noEmit
+        echo "✅ TypeScript compilation successful"
+    
+    - name: Check Python formatting
+      run: |
+        cd packages/sdk-python
+        echo "Checking Python code formatting..."
+        black --check --diff src/ || {
+          echo "❌ Python code is not formatted correctly"
+          echo "Run 'black src/' to fix formatting"
+          exit 1
+        }
+        
+        echo "Checking Python import sorting..."
+        isort --check-only --diff src/ || {
+          echo "❌ Python imports are not sorted correctly"
+          echo "Run 'isort src/' to fix import sorting"
+          exit 1
+        }
+        
+        echo "✅ Python code formatting is correct"
+    
+    - name: Python type checking
+      run: |
+        cd packages/sdk-python
+        echo "Running Python type checking..."
+        mypy src/direct_method_mqtt/ || {
+          echo "❌ Python type checking failed"
+          exit 1
+        }
+        echo "✅ Python type checking passed"
+
+  # Documentation validation
+  docs-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check README files exist
+      run: |
+        echo "Checking README files..."
+        
+        files=(
+          "README.md"
+          "packages/sdk-node/README.md"
+          "packages/sdk-python/README.md"
+          "packages/sdk-dotnet/README.md"
+        )
+        
+        for file in "${files[@]}"; do
+          if [ ! -f "$file" ]; then
+            echo "❌ Missing README file: $file"
+            exit 1
+          fi
+          
+          # Check if README has minimum content
+          if [ $(wc -l < "$file") -lt 10 ]; then
+            echo "❌ README file too short: $file"
+            exit 1
+          fi
+        done
+        
+        echo "✅ All README files are present and adequate"
+    
+    - name: Check for documentation updates
+      run: |
+        echo "Checking if documentation needs updates..."
+        
+        # Check if API files changed but docs weren't updated
+        api_changed=false
+        docs_changed=false
+        
+        if git diff --name-only origin/main...HEAD | grep -E "(client\.py|DirectMethodMqttClient\.(ts|cs))"; then
+          api_changed=true
+        fi
+        
+        if git diff --name-only origin/main...HEAD | grep -E "README\.md"; then
+          docs_changed=true
+        fi
+        
+        if [ "$api_changed" = true ] && [ "$docs_changed" = false ]; then
+          echo "⚠️  API files changed but documentation not updated"
+          echo "Consider updating README files if public APIs changed"
+        fi
+        
+        echo "✅ Documentation check completed"
+
+  # Security and dependency check
+  security-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Check Node.js dependencies
+      run: |
+        cd packages/sdk-node
+        npm ci
+        
+        echo "Running npm audit..."
+        npm audit --audit-level high || {
+          echo "⚠️  npm audit found high/critical vulnerabilities"
+          echo "Please review and fix security issues"
+        }
+        
+        echo "✅ Node.js security check completed"
+    
+    - name: Check Python dependencies
+      run: |
+        cd packages/sdk-python
+        python -m pip install --upgrade pip safety
+        
+        echo "Installing package dependencies..."
+        pip install -e .
+        
+        echo "Running safety check..."
+        safety check || {
+          echo "⚠️  Safety check found vulnerabilities"
+          echo "Please review and update dependencies"
+        }
+        
+        echo "✅ Python security check completed"
+
+  # License and copyright check
+  license-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check license files
+      run: |
+        echo "Checking license compliance..."
+        
+        # Check main license
+        if [ ! -f "LICENSE" ]; then
+          echo "❌ Missing main LICENSE file"
+          exit 1
+        fi
+        
+        # Check for copyright notices in source files
+        missing_copyright=()
+        
+        for file in $(find packages -name "*.py" -o -name "*.ts" -o -name "*.cs" | head -10); do
+          if ! grep -q -i "copyright\|license\|mit" "$file"; then
+            missing_copyright+=("$file")
+          fi
+        done
+        
+        if [ ${#missing_copyright[@]} -gt 0 ]; then
+          echo "⚠️  Files potentially missing copyright/license information:"
+          printf '%s\n' "${missing_copyright[@]}"
+          echo "Consider adding appropriate headers"
+        fi
+        
+        echo "✅ License check completed"
+
+  # Final validation summary
+  validation-summary:
+    runs-on: ubuntu-latest
+    needs: [validate-pr, breaking-changes, build-validation, code-quality, docs-validation, security-check, license-check]
+    if: always()
+    
+    steps:
+    - name: Validation Summary
+      run: |
+        echo "## PR Validation Summary"
+        echo ""
+        
+        if [ "${{ needs.validate-pr.result }}" = "success" ]; then
+          echo "✅ PR format validation: PASSED"
+        else
+          echo "❌ PR format validation: FAILED"
+        fi
+        
+        if [ "${{ needs.build-validation.result }}" = "success" ]; then
+          echo "✅ Build validation: PASSED"
+        else
+          echo "❌ Build validation: FAILED"
+        fi
+        
+        if [ "${{ needs.code-quality.result }}" = "success" ]; then
+          echo "✅ Code quality: PASSED"
+        else
+          echo "❌ Code quality: FAILED"
+        fi
+        
+        if [ "${{ needs.docs-validation.result }}" = "success" ]; then
+          echo "✅ Documentation: PASSED"
+        else
+          echo "❌ Documentation: FAILED"
+        fi
+        
+        if [ "${{ needs.security-check.result }}" = "success" ]; then
+          echo "✅ Security check: PASSED"
+        else
+          echo "❌ Security check: FAILED"
+        fi
+        
+        if [ "${{ needs.license-check.result }}" = "success" ]; then
+          echo "✅ License check: PASSED"
+        else
+          echo "❌ License check: FAILED"
+        fi
+        
+        echo ""
+        echo "Review the individual job results above for details."

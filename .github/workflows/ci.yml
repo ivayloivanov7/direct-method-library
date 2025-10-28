@@ -1,0 +1,339 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+  DOTNET_VERSION: '6.0.x'
+
+jobs:
+  # Build and validate Node.js package
+  nodejs:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/sdk-node
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: packages/sdk-node/package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build package
+      run: npm run build
+    
+    - name: Check build artifacts
+      run: |
+        ls -la dist/
+        test -f dist/index.js
+        test -f dist/index.d.ts
+        test -f dist/DirectMethodMqttClient.js
+        test -f dist/DirectMethodMqttClient.d.ts
+    
+    - name: Package check
+      run: npm pack --dry-run
+
+  # Build and validate Python package  
+  python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/sdk-python
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required for setuptools_scm
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install build dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install build twine
+    
+    - name: Build package
+      run: python -m build
+    
+    - name: Check package
+      run: |
+        ls -la dist/
+        twine check dist/*
+    
+    - name: Install package and test import
+      run: |
+        pip install dist/*.whl
+        python -c "import direct_method_mqtt; print(f'Version: {direct_method_mqtt.__version__}')"
+
+  # Build and validate .NET package
+  dotnet:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/sdk-dotnet
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build solution
+      run: dotnet build --configuration Release --no-restore
+    
+    - name: Pack NuGet package
+      run: dotnet pack --configuration Release --no-build --output ./nupkg
+    
+    - name: Check package
+      run: |
+        ls -la nupkg/
+        test -f nupkg/*.nupkg
+
+  # Code quality checks
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js for linting
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: packages/sdk-node/package-lock.json
+    
+    - name: Setup Python for linting
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install Node.js dependencies
+      run: cd packages/sdk-node && npm ci
+    
+    - name: Install Python linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort mypy types-paho-mqtt
+    
+    - name: TypeScript compilation check
+      run: cd packages/sdk-node && npx tsc --noEmit
+    
+    - name: Python code formatting check
+      run: |
+        cd packages/sdk-python
+        black --check --diff src/
+        isort --check-only --diff src/
+    
+    - name: Python type checking
+      run: |
+        cd packages/sdk-python
+        mypy src/direct_method_mqtt/
+
+  # Multi-platform compatibility check
+  multi-platform:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            shell: bash
+          - os: windows-latest  
+            shell: pwsh
+          - os: macos-latest
+            shell: bash
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Setup Python  
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Build Node.js package
+      shell: ${{ matrix.shell }}
+      run: |
+        cd packages/sdk-node
+        npm ci
+        npm run build
+    
+    - name: Build Python package
+      shell: ${{ matrix.shell }}
+      run: |
+        cd packages/sdk-python
+        python -m pip install --upgrade pip build
+        python -m build
+    
+    - name: Build .NET package
+      shell: ${{ matrix.shell }}
+      run: |
+        cd packages/sdk-dotnet
+        dotnet restore
+        dotnet build --configuration Release
+
+  # Integration test with MQTT broker
+  integration-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mosquitto:
+        image: eclipse-mosquitto:2.0
+        ports:
+          - 1883:1883
+        options: >-
+          --health-cmd "mosquitto_pub -t health -m 'test' -h localhost"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Install and test Python package
+      run: |
+        cd packages/sdk-python
+        python -m pip install --upgrade pip
+        pip install -e .
+        python -c "
+        from direct_method_mqtt import DirectMethodMqttClient
+        import time
+        
+        client = DirectMethodMqttClient('localhost', 1883, 'test/python')
+        print('Testing Python MQTT client...')
+        try:
+            client.connect(timeout=10)
+            client.subscribe()
+            client.publish('Hello from Python CI!')
+            print('Python client test: PASSED')
+        except Exception as e:
+            print(f'Python client test: FAILED - {e}')
+            exit(1)
+        finally:
+            client.disconnect()
+        "
+    
+    - name: Install and test Node.js package
+      run: |
+        cd packages/sdk-node
+        npm ci
+        npm run build
+        node -e "
+        const { DirectMethodMqttClient } = require('./dist/index.js');
+        
+        async function test() {
+          const client = new DirectMethodMqttClient('localhost', 1883, 'test/nodejs');
+          console.log('Testing Node.js MQTT client...');
+          
+          try {
+            await client.connect();
+            await client.subscribe();
+            await client.publish('Hello from Node.js CI!');
+            console.log('Node.js client test: PASSED');
+          } catch (error) {
+            console.log(\`Node.js client test: FAILED - \${error.message}\`);
+            process.exit(1);
+          } finally {
+            await client.disconnect();
+          }
+        }
+        
+        test().catch(console.error);
+        "
+    
+    - name: Build and test .NET package
+      run: |
+        cd packages/sdk-dotnet
+        dotnet restore
+        dotnet build --configuration Release
+        
+        # Create a simple test program
+        cat > TestProgram.cs << 'EOF'
+        using DirectMethod.Mqtt.Client;
+        using System;
+        using System.Threading.Tasks;
+        
+        class Program
+        {
+            static async Task Main()
+            {
+                var client = new DirectMethodMqttClient("localhost", 1883, "test/dotnet");
+                Console.WriteLine("Testing .NET MQTT client...");
+                
+                try
+                {
+                    await client.ConnectAsync();
+                    await client.SubscribeAsync();
+                    await client.PublishAsync("Hello from .NET CI!");
+                    Console.WriteLine(".NET client test: PASSED");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($".NET client test: FAILED - {ex.Message}");
+                    Environment.Exit(1);
+                }
+                finally
+                {
+                    await client.DisconnectAsync();
+                    client.Dispose();
+                }
+            }
+        }
+        EOF
+        
+        # Compile and run test
+        dotnet new console -n TestApp --force
+        cp TestProgram.cs TestApp/Program.cs
+        cd TestApp
+        dotnet add reference ../src/DirectMethod.Mqtt.Client/DirectMethod.Mqtt.Client.csproj
+        dotnet run

@@ -1,0 +1,38 @@
+{
+  "name": "direct-method-library",
+  "version": "1.0.0",
+  "description": "Multi-platform MQTT client library showcasing best practices for organizing code across different programming languages",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build:node",
+    "build:node": "cd packages/sdk-node && npm run build",
+    "clean": "npm run clean:node",
+    "clean:node": "cd packages/sdk-node && npm run clean",
+    "install:all": "npm install && npm run install:python && npm run install:dotnet",
+    "install:python": "cd packages/sdk-python && pip install -e .",
+    "install:dotnet": "cd packages/sdk-dotnet && dotnet restore",
+    "version:sync": "node tools/version-sync.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ivayloivanov7/direct-method-library.git"
+  },
+  "keywords": [
+    "mqtt",
+    "client",
+    "multi-platform",
+    "monorepo",
+    "demo"
+  ],
+  "author": "Direct Method Library Team",
+  "license": "MIT",
+  "devDependencies": {
+    "lerna": "^7.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
