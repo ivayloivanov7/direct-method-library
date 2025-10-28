@@ -412,10 +412,17 @@ publish/
 *.nupkg
 # NuGet Symbol Packages
 *.snupkg
-# The packages folder can be ignored because of Package Restore
-**/[Pp]ackages/*
-# except build/, which is used as an MSBuild target.
-!**/[Pp]ackages/build/
+# The packages folder can be ignored because of Package Restore for .NET projects
+# BUT NOT our source code packages/ directory, so we'll be more specific:
+# Common .NET package directories
+**/packages/
+# Allow our source code packages
+!/packages/
+# But still ignore NuGet packages within our packages
+packages/**/obj/
+packages/**/bin/
+packages/**/*.nupkg
+packages/**/*.snupkg
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # NuGet v3's project.json files produces more ignorable files

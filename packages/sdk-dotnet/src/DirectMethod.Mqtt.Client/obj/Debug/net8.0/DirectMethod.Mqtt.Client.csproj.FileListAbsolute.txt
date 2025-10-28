@@ -1,0 +1,12 @@
+/media/iivanov/Shared/projects/direct-method-library/packages/sdk-dotnet/src/DirectMethod.Mqtt.Client/bin/Debug/net8.0/DirectMethod.Mqtt.Client.deps.json
+/media/iivanov/Shared/projects/direct-method-library/packages/sdk-dotnet/src/DirectMethod.Mqtt.Client/bin/Debug/net8.0/DirectMethod.Mqtt.Client.dll
+/media/iivanov/Shared/projects/direct-method-library/packages/sdk-dotnet/src/DirectMethod.Mqtt.Client/bin/Debug/net8.0/DirectMethod.Mqtt.Client.pdb
+/media/iivanov/Shared/projects/direct-method-library/packages/sdk-dotnet/src/DirectMethod.Mqtt.Client/obj/Debug/net8.0/DirectMethod.Mqtt.Client.csproj.AssemblyReference.cache
+/media/iivanov/Shared/projects/direct-method-library/packages/sdk-dotnet/src/DirectMethod.Mqtt.Client/obj/Debug/net8.0/DirectMethod.Mqtt.Client.GeneratedMSBuildEditorConfig.editorconfig
+/media/iivanov/Shared/projects/direct-method-library/packages/sdk-dotnet/src/DirectMethod.Mqtt.Client/obj/Debug/net8.0/DirectMethod.Mqtt.Client.AssemblyInfoInputs.cache
+/media/iivanov/Shared/projects/direct-method-library/packages/sdk-dotnet/src/DirectMethod.Mqtt.Client/obj/Debug/net8.0/DirectMethod.Mqtt.Client.AssemblyInfo.cs
+/media/iivanov/Shared/projects/direct-method-library/packages/sdk-dotnet/src/DirectMethod.Mqtt.Client/obj/Debug/net8.0/DirectMethod.Mqtt.Client.csproj.CoreCompileInputs.cache
+/media/iivanov/Shared/projects/direct-method-library/packages/sdk-dotnet/src/DirectMethod.Mqtt.Client/obj/Debug/net8.0/DirectMethod.Mqtt.Client.dll
+/media/iivanov/Shared/projects/direct-method-library/packages/sdk-dotnet/src/DirectMethod.Mqtt.Client/obj/Debug/net8.0/refint/DirectMethod.Mqtt.Client.dll
+/media/iivanov/Shared/projects/direct-method-library/packages/sdk-dotnet/src/DirectMethod.Mqtt.Client/obj/Debug/net8.0/DirectMethod.Mqtt.Client.pdb
+/media/iivanov/Shared/projects/direct-method-library/packages/sdk-dotnet/src/DirectMethod.Mqtt.Client/obj/Debug/net8.0/ref/DirectMethod.Mqtt.Client.dll

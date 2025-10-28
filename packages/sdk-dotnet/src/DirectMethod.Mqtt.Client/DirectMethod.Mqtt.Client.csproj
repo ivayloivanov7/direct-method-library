@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageId>DirectMethod.Mqtt.Client</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
+    <Title>Direct Method MQTT Client for .NET</Title>
+    <Authors>Direct Method Library Team</Authors>
+    <Description>MQTT client implementation for .NET - part of Direct Method Library</Description>
+    <Copyright>Copyright © 2025 Direct Method Library Team</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/ivayloivanov7/direct-method-library</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ivayloivanov7/direct-method-library.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>mqtt;client;dotnet;iot;messaging</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MQTTnet" Version="4.3.1.873" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
