@@ -414,15 +414,20 @@ publish/
 *.snupkg
 # The packages folder can be ignored because of Package Restore for .NET projects
 # BUT NOT our source code packages/ directory, so we'll be more specific:
-# Common .NET package directories
+# Common .NET package directories (but not our source packages)
 **/packages/
 # Allow our source code packages
 !/packages/
-# But still ignore NuGet packages within our packages
+# But ignore all build artifacts within our packages
 packages/**/obj/
 packages/**/bin/
+packages/**/dist/
+packages/**/nupkg/
 packages/**/*.nupkg
 packages/**/*.snupkg
+packages/**/__pycache__/
+packages/**/*.egg-info/
+packages/**/node_modules/
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # NuGet v3's project.json files produces more ignorable files
