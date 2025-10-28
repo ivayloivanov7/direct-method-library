@@ -8,14 +8,12 @@ on:
 env:
   NODE_VERSION: '18'
   PYTHON_VERSION: '3.11'
-  DOTNET_VERSION: '6.0.x'
+  DOTNET_VERSION: '8.0.x'
 
 jobs:
   # Create GitHub release
   create-release:
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
       
     steps:
     - uses: actions/checkout@v4
@@ -71,12 +69,12 @@ jobs:
     
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
-        release_name: Release v${{ steps.get_version.outputs.VERSION }}
+        name: Release v${{ steps.get_version.outputs.VERSION }}
         body: ${{ steps.release_notes.outputs.release_notes }}
         draft: false
         prerelease: false
@@ -115,16 +113,6 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: twine upload dist/*
-    
-    - name: Upload wheel to release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: packages/sdk-python/dist/*.whl
-        asset_name: direct-method-mqtt-python.whl
-        asset_content_type: application/zip
 
   # Build and publish Node.js package
   publish-nodejs:
@@ -153,19 +141,6 @@ jobs:
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       run: npm publish --access public
-    
-    - name: Create package tarball
-      run: npm pack
-    
-    - name: Upload tarball to release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: packages/sdk-node/*.tgz
-        asset_name: direct-method-mqtt-client.tgz
-        asset_content_type: application/gzip
 
   # Build and publish .NET package
   publish-dotnet:
@@ -179,7 +154,7 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
@@ -196,16 +171,6 @@ jobs:
       env:
         NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
       run: dotnet nuget push "nupkg/*.nupkg" --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
-    
-    - name: Upload package to release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: packages/sdk-dotnet/nupkg/*.nupkg
-        asset_name: DirectMethod.Mqtt.Client.nupkg
-        asset_content_type: application/zip
 
   # Update documentation
   update-docs:
