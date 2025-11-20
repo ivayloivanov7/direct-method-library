@@ -4,7 +4,7 @@ import logging
 import threading
 import time
 import uuid
-from typing import Callable, Optional, Tuple, Any, cast
+from typing import Any, Callable, Optional, Tuple, cast
 
 import paho.mqtt.client as mqtt
 
