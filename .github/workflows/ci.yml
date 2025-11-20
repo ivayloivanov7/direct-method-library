@@ -243,12 +243,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e .
         # Smoke test: import and instantiate client without connecting to a broker
-        python - <<'PY'
-          from direct_method_mqtt import DirectMethodMqttClient
-          print('Python import OK')
-          client = DirectMethodMqttClient('localhost', 1883, 'test/python')
-          print('Instantiated DirectMethodMqttClient, client_id=', client.client_id)
-        PY
+        python -c "from direct_method_mqtt import DirectMethodMqttClient; print('Python import OK'); client = DirectMethodMqttClient('localhost', 1883, 'test/python'); print('Instantiated DirectMethodMqttClient, client_id=', client.client_id)"
     
     - name: Install and smoke-test Node.js package (no network)
       run: |
