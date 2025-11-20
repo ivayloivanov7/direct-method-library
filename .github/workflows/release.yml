@@ -36,40 +36,11 @@ jobs:
       run: |
         # Extract version from tag
         VERSION=${{ steps.get_version.outputs.VERSION }}
-        
-        # Create release notes
-        cat > release_notes.md << EOF
-        # Release v${VERSION}
-        
-        ## Changes in this release
-        
-        This release includes updates to all platform packages:
-        - **Python**: \`direct-method-mqtt-python v${VERSION}\`
-  - **Node.js**: \`direct-method-mqtt-client v${VERSION}\`
-        - **.NET**: \`DirectMethod.Mqtt.Client v${VERSION}\`
-        
-        ## Installation
-        
-        ### Python
-        \`\`\`bash
-        pip install direct-method-mqtt-python==${VERSION}
-        \`\`\`
-        
-        ### Node.js
-        \`\`\`bash
-  npm install direct-method-mqtt-client@${VERSION}
-        \`\`\`
-        
-        ### .NET
-        \`\`\`bash
-        dotnet add package DirectMethod.Mqtt.Client --version ${VERSION}
-        \`\`\`
-        
-        ## Documentation
-        
-        See the [README](https://github.com/ivayloivanov7/direct-method-library) for usage examples and API documentation.
-        EOF
-        
+
+        # Use the release notes generator script to create release_notes.md
+        python3 tools/release-notes.py --version "${VERSION}" --output release_notes.md
+
+        # Expose the generated notes to subsequent steps via GITHUB_OUTPUT
         echo "release_notes<<EOF" >> $GITHUB_OUTPUT
         cat release_notes.md >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
@@ -197,27 +168,30 @@ jobs:
       run: |
         VERSION=${{ steps.get_version.outputs.VERSION }}
         DATE=$(date +%Y-%m-%d)
-        
-        # Update global changelog
+
+        mkdir -p global-changelog
         if [ ! -f global-changelog/CHANGELOG.md ]; then
           echo "# Changelog" > global-changelog/CHANGELOG.md
           echo "" >> global-changelog/CHANGELOG.md
         fi
-        
-        # Add new version entry
-        sed -i "3i\\
-        ## [${VERSION}] - ${DATE}\\
-        \\
-        ### Added\\
-        - Released version ${VERSION} of all platform packages\\
-        - Python: direct-method-mqtt-python v${VERSION}\\
-  - Node.js: direct-method-mqtt-client v${VERSION}\\
-        - .NET: DirectMethod.Mqtt.Client v${VERSION}\\
-        \\
-        ### Changed\\
-        - Updated all packages to version ${VERSION}\\
-        \\
-        " global-changelog/CHANGELOG.md
+
+        # Append a simple release entry to the end of the changelog (safe & idempotent)
+        cat > global-changelog/release_entry.md <<'EOF'
+        ## [${VERSION}] - ${DATE}
+
+        ### Added
+        - Released version ${VERSION} of all platform packages
+        - Python: direct-method-mqtt-python v${VERSION}
+        - Node.js: direct-method-mqtt-client v${VERSION}
+        - .NET: DirectMethod.Mqtt.Client v${VERSION}
+
+        ### Changed
+        - Updated all packages to version ${VERSION}
+
+        EOF
+
+        cat global-changelog/release_entry.md >> global-changelog/CHANGELOG.md
+        rm global-changelog/release_entry.md
     
     - name: Commit changelog
       run: |
