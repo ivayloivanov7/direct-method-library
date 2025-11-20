@@ -4,7 +4,7 @@ import logging
 import threading
 import time
 import uuid
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, Any, cast
 
 import paho.mqtt.client as mqtt
 
@@ -78,12 +78,14 @@ class DirectMethodMqttClient:
         self._message_callback: Optional[MessageCallback] = None
 
         # Set up MQTT client callbacks
-        self._client.on_connect = self._on_connect
-        self._client.on_disconnect = self._on_disconnect
-        self._client.on_message = self._on_message
-        self._client.on_publish = self._on_publish
-        self._client.on_subscribe = self._on_subscribe
-        self._client.on_log = self._on_log
+        self._client.on_connect = cast(Any, self._on_connect)
+        self._client.on_disconnect = cast(Any, self._on_disconnect)
+        self._client.on_message = cast(Any, self._on_message)
+        self._client.on_publish = cast(Any, self._on_publish)
+        # `on_subscribe` has multiple possible callback signatures in the
+        # paho-mqtt types; cast to Any to satisfy static typing.
+        self._client.on_subscribe = cast(Any, self._on_subscribe)
+        self._client.on_log = cast(Any, self._on_log)
 
     def connect(self, timeout: float = 5.0) -> None:
         """Connect to the MQTT broker.
