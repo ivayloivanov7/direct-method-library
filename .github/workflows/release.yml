@@ -5,6 +5,13 @@ on:
     tags:
       - 'v*'
 
+# Grant the workflow minimal write permissions so the GITHUB_TOKEN can create
+# releases and push changelog updates. Keep permissions scoped to only what's
+# required instead of using a long-lived personal access token.
+permissions:
+  contents: write
+  packages: write
+
 env:
   NODE_VERSION: '18'
   PYTHON_VERSION: '3.11'
