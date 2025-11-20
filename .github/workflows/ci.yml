@@ -270,8 +270,10 @@ jobs:
             }
           }
         EOF
-        dotnet new console -n TestApp --force
+        # Create a console test app that targets .NET 8.0 (match the toolchain)
+        dotnet new console -n TestApp -f net8.0 --force
         cp TestProgram.cs TestApp/Program.cs
         cd TestApp
         dotnet add reference ../src/DirectMethod.Mqtt.Client/DirectMethod.Mqtt.Client.csproj
-        dotnet run --no-build
+        # Build & run the test app (allow the runner to build the project so the binary exists)
+        dotnet run
