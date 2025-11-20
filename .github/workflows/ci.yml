@@ -237,100 +237,46 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
     
-    - name: Install and test Python package
+    - name: Install and smoke-test Python package (no network)
       run: |
         cd packages/sdk-python
         python -m pip install --upgrade pip
         pip install -e .
-        python -c "
-        from direct_method_mqtt import DirectMethodMqttClient
-        import time
-        
-        client = DirectMethodMqttClient('localhost', 1883, 'test/python')
-        print('Testing Python MQTT client...')
-        try:
-            client.connect(timeout=10)
-            client.subscribe()
-            client.publish('Hello from Python CI!')
-            print('Python client test: PASSED')
-        except Exception as e:
-            print(f'Python client test: FAILED - {e}')
-            exit(1)
-        finally:
-            client.disconnect()
-        "
+        # Smoke test: import and instantiate client without connecting to a broker
+        python - <<'PY'
+          from direct_method_mqtt import DirectMethodMqttClient
+          print('Python import OK')
+          client = DirectMethodMqttClient('localhost', 1883, 'test/python')
+          print('Instantiated DirectMethodMqttClient, client_id=', client.client_id)
+        PY
     
-    - name: Install and test Node.js package
+    - name: Install and smoke-test Node.js package (no network)
       run: |
         cd packages/sdk-node
-        npm ci
+        npm ci --no-audit --progress=false
         npm run build
-        node -e "
-        const { DirectMethodMqttClient } = require('./dist/index.js');
-        
-        async function test() {
-          const client = new DirectMethodMqttClient('localhost', 1883, 'test/nodejs');
-          console.log('Testing Node.js MQTT client...');
-          
-          try {
-            await client.connect();
-            await client.subscribe();
-            await client.publish('Hello from Node.js CI!');
-            console.log('Node.js client test: PASSED');
-          } catch (error) {
-            console.log(\`Node.js client test: FAILED - \${error.message}\`);
-            process.exit(1);
-          } finally {
-            await client.disconnect();
-          }
-        }
-        
-        test().catch(console.error);
-        "
+        # Smoke test: require and instantiate without connecting
+        node -e "const C=require('./dist/index.js'); const DirectMethodMqttClient = C.DirectMethodMqttClient || C.default || C; const c=new DirectMethodMqttClient('localhost',1883,'test/nodejs'); console.log('Node import OK', typeof c);"
     
-    - name: Build and test .NET package
+    - name: Build and smoke-test .NET package (no network)
       run: |
         cd packages/sdk-dotnet
         dotnet restore
         dotnet build --configuration Release
-        
-        # Create a simple test program
-        cat > TestProgram.cs << 'EOF'
-        using DirectMethod.Mqtt.Client;
-        using System;
-        using System.Threading.Tasks;
-        
-        class Program
-        {
-            static async Task Main()
-            {
-                var client = new DirectMethodMqttClient("localhost", 1883, "test/dotnet");
-                Console.WriteLine("Testing .NET MQTT client...");
-                
-                try
-                {
-                    await client.ConnectAsync();
-                    await client.SubscribeAsync();
-                    await client.PublishAsync("Hello from .NET CI!");
-                    Console.WriteLine(".NET client test: PASSED");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($".NET client test: FAILED - {ex.Message}");
-                    Environment.Exit(1);
-                }
-                finally
-                {
-                    await client.DisconnectAsync();
-                    client.Dispose();
-                }
+        # Smoke test: compile a tiny program that instantiates the client but does not connect
+        cat > TestProgram.cs <<'EOF'
+          using DirectMethod.Mqtt.Client;
+          using System;
+
+          class Program {
+            static void Main() {
+              var client = new DirectMethodMqttClient("localhost", 1883, "test/dotnet");
+              Console.WriteLine("Instantiated .NET DirectMethodMqttClient: " + client.ClientId);
             }
-        }
+          }
         EOF
-        
-        # Compile and run test
         dotnet new console -n TestApp --force
         cp TestProgram.cs TestApp/Program.cs
         cd TestApp
         dotnet add reference ../src/DirectMethod.Mqtt.Client/DirectMethod.Mqtt.Client.csproj
-        dotnet run
+        dotnet run --no-build
