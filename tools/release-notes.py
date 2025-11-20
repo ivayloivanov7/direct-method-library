@@ -164,7 +164,7 @@ def generate_release_notes(version=None, include_commits=True):
     notes.append("## Package Versions")
     notes.append("")
     notes.append(f"- **Python**: `direct-method-mqtt-python v{current_versions['python']}`")
-    notes.append(f"- **Node.js**: `@direct-method/mqtt-client v{current_versions['nodejs']}`")
+    notes.append(f"- **Node.js**: `direct-method-mqtt-client v{current_versions['nodejs']}`")
     notes.append(f"- **.NET**: `DirectMethod.Mqtt.Client v{current_versions['dotnet']}`")
     notes.append("")
     
@@ -178,7 +178,7 @@ def generate_release_notes(version=None, include_commits=True):
     notes.append("")
     notes.append("### Node.js")
     notes.append("```bash")
-    notes.append(f"npm install @direct-method/mqtt-client@{current_versions['nodejs']}")
+    notes.append(f"npm install direct-method-mqtt-client@{current_versions['nodejs']}")
     notes.append("```")
     notes.append("")
     notes.append("### .NET")

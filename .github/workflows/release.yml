@@ -45,7 +45,7 @@ jobs:
         
         This release includes updates to all platform packages:
         - **Python**: \`direct-method-mqtt-python v${VERSION}\`
-        - **Node.js**: \`@direct-method/mqtt-client v${VERSION}\`
+  - **Node.js**: \`direct-method-mqtt-client v${VERSION}\`
         - **.NET**: \`DirectMethod.Mqtt.Client v${VERSION}\`
         
         ## Installation
@@ -57,7 +57,7 @@ jobs:
         
         ### Node.js
         \`\`\`bash
-        npm install @direct-method/mqtt-client@${VERSION}
+  npm install direct-method-mqtt-client@${VERSION}
         \`\`\`
         
         ### .NET
@@ -211,7 +211,7 @@ jobs:
         ### Added\\
         - Released version ${VERSION} of all platform packages\\
         - Python: direct-method-mqtt-python v${VERSION}\\
-        - Node.js: @direct-method/mqtt-client v${VERSION}\\
+  - Node.js: direct-method-mqtt-client v${VERSION}\\
         - .NET: DirectMethod.Mqtt.Client v${VERSION}\\
         \\
         ### Changed\\

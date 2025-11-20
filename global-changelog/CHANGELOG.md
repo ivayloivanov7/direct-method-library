@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial project structure with multi-platform support
 - Python package: `direct-method-mqtt-python`
-- Node.js package: `@direct-method/mqtt-client`
+- Node.js package: `direct-method-mqtt-client`
 - .NET package: `DirectMethod.Mqtt.Client`
 - Comprehensive CI/CD pipeline with GitHub Actions
 - Multi-platform build and test support

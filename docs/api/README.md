@@ -79,7 +79,7 @@ Key features:
 - Comprehensive type definitions
 
 ```typescript
-import { DirectMethodMqttClient } from '@direct-method/mqtt-client';
+import { DirectMethodMqttClient } from 'direct-method-mqtt-client';
 
 const client = new DirectMethodMqttClient('localhost', 1883, 'test/topic');
 client.onMessageReceived((topic, message) => console.log(`${topic}: ${message}`));

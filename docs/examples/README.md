@@ -39,7 +39,7 @@ finally:
 
 #### Node.js Example
 ```typescript
-import { DirectMethodMqttClient } from '@direct-method/mqtt-client';
+import { DirectMethodMqttClient } from 'direct-method-mqtt-client';
 
 async function basicExample() {
     const client = new DirectMethodMqttClient('localhost', 1883, 'demo/basic');
@@ -181,7 +181,7 @@ processor.run()
 
 #### Node.js - IoT Device Manager
 ```typescript
-import { DirectMethodMqttClient } from '@direct-method/mqtt-client';
+import { DirectMethodMqttClient } from 'direct-method-mqtt-client';
 
 interface DeviceMessage {
     deviceId: string;
@@ -495,7 +495,7 @@ if connect_with_retry(client):
 
 #### Node.js
 ```typescript
-import { DirectMethodMqttClient } from '@direct-method/mqtt-client';
+import { DirectMethodMqttClient } from 'direct-method-mqtt-client';
 
 async function connectWithRetry(
     client: DirectMethodMqttClient, 

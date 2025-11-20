@@ -1,17 +1,17 @@
-# @direct-method/mqtt-client
+# direct-method-mqtt-client
 
 TypeScript/Node.js MQTT client implementation - part of the Direct Method Library.
 
 ## Installation
 
 ```bash
-npm install @direct-method/mqtt-client
+npm install direct-method-mqtt-client
 ```
 
 ## Quick Start
 
 ```typescript
-import { DirectMethodMqttClient } from '@direct-method/mqtt-client';
+import { DirectMethodMqttClient } from 'direct-method-mqtt-client';
 
 const client = new DirectMethodMqttClient('localhost', 1883, 'test/topic');
 

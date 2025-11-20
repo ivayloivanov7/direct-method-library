@@ -60,7 +60,7 @@ client.publish("Hello from Python!")
 
 ### Node.js Example
 ```typescript
-import { DirectMethodMqttClient } from '@direct-method/mqtt-client';
+import { DirectMethodMqttClient } from 'direct-method-mqtt-client';
 
 const client = new DirectMethodMqttClient('localhost', 1883, 'test/topic');
 await client.connect();
@@ -81,7 +81,7 @@ await client.PublishAsync("Hello from .NET!");
 ## Package Information
 
 - **Python**: `direct-method-mqtt-python`
-- **Node.js**: `@direct-method/mqtt-client`
+- **Node.js**: `direct-method-mqtt-client`
 - **C#/.NET**: `DirectMethod.Mqtt.Client`
 
 ## Development
