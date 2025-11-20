@@ -27,6 +27,9 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
+        # Use the per-package lockfile for sdk-node to allow package-scoped
+        # caching. `packages/sdk-node/package-lock.json` is committed to the
+        # repo so actions/setup-node can find it reliably.
         cache-dependency-path: packages/sdk-node/package-lock.json
     
     - name: Install dependencies
@@ -122,6 +125,9 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
+        # Use the per-package lockfile for sdk-node to allow package-scoped
+        # caching. `packages/sdk-node/package-lock.json` is committed to the
+        # repo so actions/setup-node can find it reliably.
         cache-dependency-path: packages/sdk-node/package-lock.json
     
     - name: Setup Python for linting
