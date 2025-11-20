@@ -21,16 +21,19 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        # Use the per-package lockfile for sdk-node to allow package-scoped
-        # caching. `packages/sdk-node/package-lock.json` is committed to the
-        # repo so actions/setup-node can find it reliably.
-        cache-dependency-path: packages/sdk-node/package-lock.json
+        # Use the root workspace lockfile for caching. This is the most
+        # reliable option for npm workspaces because npm often manages a single
+        # lockfile at the repository root. If you want package-scoped caching
+        # later, switch this back to packages/sdk-node/package-lock.json.
+        cache-dependency-path: package-lock.json
     
     - name: Install dependencies
       run: npm ci
@@ -125,10 +128,9 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        # Use the per-package lockfile for sdk-node to allow package-scoped
-        # caching. `packages/sdk-node/package-lock.json` is committed to the
-        # repo so actions/setup-node can find it reliably.
-        cache-dependency-path: packages/sdk-node/package-lock.json
+        # Use the root workspace lockfile for caching. This matches the node
+        # job configuration and is reliable for npm workspaces.
+        cache-dependency-path: package-lock.json
     
     - name: Setup Python for linting
       uses: actions/setup-python@v4
