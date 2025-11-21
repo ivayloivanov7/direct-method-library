@@ -17,7 +17,8 @@
     "version:validate": "node tools/version-sync.js validate",
     "version:sync": "node tools/version-sync.js sync",
     "version:sync:to": "node tools/version-sync.js sync",
-    "version:help": "node tools/version-sync.js help"
+    "version:help": "node tools/version-sync.js help",
+    "release": "node tools/release.js"
   },
   "repository": {
     "type": "git",
