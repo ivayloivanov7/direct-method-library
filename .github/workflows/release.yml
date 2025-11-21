@@ -195,8 +195,55 @@ jobs:
     
     - name: Commit changelog
       run: |
+        set -euo pipefail
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
+
+        VERSION=${{ steps.get_version.outputs.VERSION }}
+        TAG_COMMIT=$(git rev-parse HEAD)
+
+        # Create a changelog branch from origin/main and commit the changelog there.
+        BRANCH_NAME="update-changelog/v${VERSION}"
+        git fetch origin main
+        git checkout -b "${BRANCH_NAME}" origin/main
         git add global-changelog/CHANGELOG.md
-        git commit -m "Update changelog for v${{ steps.get_version.outputs.VERSION }}"
-        git push
+        git commit -m "Update changelog for v${VERSION}"
+        CHANGE_COMMIT=$(git rev-parse HEAD)
+        git push --set-upstream origin "${BRANCH_NAME}"
+
+        echo "Changelog committed as ${CHANGE_COMMIT} on ${BRANCH_NAME}."
+
+        # Find all remote branches that contain the tag commit and apply the changelog commit to them.
+        # This will cherry-pick the changelog commit onto each branch and push it.
+        mapfile -t branches < <(git branch -r --contains "${TAG_COMMIT}" | sed 's#origin/##' | sed 's#\s*##g' | grep -v '^HEAD$' || true)
+
+        for b in "${branches[@]}"; do
+          echo "Processing branch: ${b}"
+          # skip the branch we already pushed to
+          if [ "${b}" = "${BRANCH_NAME}" ]; then
+            echo "Skipping ${b} (already has changelog commit)"
+            continue
+          fi
+
+          # Checkout the remote branch locally
+          git fetch origin "${b}:${b}" || { echo "Failed to fetch ${b}"; exit 1; }
+          git checkout "${b}"
+
+          # Cherry-pick the changelog commit
+          if git rev-parse --verify "${CHANGE_COMMIT}" >/dev/null 2>&1; then
+            if git cherry-pick -x "${CHANGE_COMMIT}"; then
+              git push origin "HEAD:${b}"
+              echo "Pushed changelog to ${b}"
+            else
+              echo "Cherry-pick failed on branch ${b}; aborting cherry-pick and skipping push."
+              git cherry-pick --abort || true
+              # restore to a known state by checking out BRANCH_NAME again
+              git checkout "${BRANCH_NAME}"
+            fi
+          else
+            echo "Change commit ${CHANGE_COMMIT} not found locally; skipping ${b}"
+          fi
+        done
+
+        # Return to a safe branch
+        git checkout "${BRANCH_NAME}" || true
