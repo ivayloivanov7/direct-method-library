@@ -17,9 +17,19 @@ const PACKAGES = {
 };
 
 function getCurrentVersion() {
-  // Read version from Node.js package.json as the source of truth
-  const packageJson = JSON.parse(fs.readFileSync(PACKAGES.node, 'utf8'));
+  // Read version from the repository root package.json (main package) as the source of truth
+  const rootPkgPath = path.resolve(process.cwd(), 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(rootPkgPath, 'utf8'));
   return packageJson.version;
+}
+
+function getSdkNodeVersion() {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(PACKAGES.node, 'utf8'));
+    return pkg.version;
+  } catch (e) {
+    return 'Not found';
+  }
 }
 
 function updateNodeJsVersion(newVersion) {
@@ -82,12 +92,15 @@ function syncVersions(targetVersion = null) {
   const versionToUse = targetVersion || currentVersion;
   
   console.log(`🔄 Synchronizing all packages to version ${versionToUse}`);
-  console.log(`📦 Current Node.js version: ${currentVersion}`);
-  
-  if (targetVersion && targetVersion !== currentVersion) {
-    updateNodeJsVersion(targetVersion);
+  console.log(`📦 Root package version: ${currentVersion}`);
+  const sdkNodeVersion = getSdkNodeVersion();
+  console.log(`📦 packages/sdk-node version: ${sdkNodeVersion}`);
+
+  // Always ensure the SDK Node package.json matches the versionToUse
+  if (sdkNodeVersion !== versionToUse) {
+    updateNodeJsVersion(versionToUse);
   }
-  
+
   updateDotNetVersion(versionToUse);
   updatePythonVersion(versionToUse);
   
@@ -98,8 +111,11 @@ function syncVersions(targetVersion = null) {
 function validateVersions() {
   console.log('🔍 Validating version consistency...\n');
   
-  const nodeVersion = getCurrentVersion();
-  console.log(`📦 Node.js: ${nodeVersion}`);
+  const rootVersion = getCurrentVersion();
+  console.log(`📦 Root package: ${rootVersion}`);
+
+  const sdkNodeVersion = getSdkNodeVersion();
+  console.log(`📦 SDK Node package: ${sdkNodeVersion}`);
   
   // Check .NET version
   const csprojContent = fs.readFileSync(PACKAGES.dotnet, 'utf8');
@@ -117,17 +133,23 @@ function validateVersions() {
     if (versionMatch) pythonVersion = versionMatch[1];
   }
   console.log(`📦 Python: ${pythonVersion} (from pyproject.toml)`);
-  
-  // Validate consistency
-  const allVersions = [nodeVersion, dotnetVersion];
+
+  // Validate consistency across all platforms
+  const allVersions = [rootVersion, sdkNodeVersion, dotnetVersion, pythonVersion].filter(v => v && v !== 'Not found');
   const uniqueVersions = [...new Set(allVersions)];
-  
+
   if (uniqueVersions.length === 1) {
     console.log(`\n✅ All packages are synchronized at version ${uniqueVersions[0]}`);
     return true;
   } else {
     console.log(`\n❌ Version mismatch detected!`);
-    console.log(`   Unique versions found: ${uniqueVersions.join(', ')}`);
+    // Print per-package versions to help debugging
+    console.log(`   root: ${rootVersion}`);
+    console.log(`   sdk-node: ${sdkNodeVersion}`);
+    console.log(`   dotnet: ${dotnetVersion}`);
+    console.log(`   python: ${pythonVersion}`);
+    // set non-zero exit code for CI
+    process.exitCode = 1;
     return false;
   }
 }
