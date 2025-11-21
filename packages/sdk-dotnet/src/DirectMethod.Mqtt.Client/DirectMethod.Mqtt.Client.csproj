@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>DirectMethod.Mqtt.Client</PackageId>
-    <PackageVersion>1.2.1</PackageVersion>
+    <PackageVersion>1.2.2</PackageVersion>
     <Title>Direct Method MQTT Client for .NET</Title>
     <Authors>Direct Method Library Team</Authors>
     <Description>MQTT client implementation for .NET - part of Direct Method Library</Description>

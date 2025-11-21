@@ -37,3 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multi-platform MQTT client implementations
 - Complete CI/CD pipeline
 - Package distribution to all major package managers
+
+## [1.2.2] - Bug Fix
+
+### Fixed
+- test fix 1
+- test fix 2
