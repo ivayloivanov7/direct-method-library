@@ -44,19 +44,37 @@ function updateDotNetVersion(newVersion) {
 
 function updatePythonVersion(newVersion) {
   let pyprojectContent = fs.readFileSync(PACKAGES.python, 'utf8');
-  
-  // For Python, we'll add a comment with the version since setuptools_scm handles versioning
-  const versionComment = `# Version: ${newVersion}`;
-  
-  if (pyprojectContent.includes('# Version:')) {
-    pyprojectContent = pyprojectContent.replace(/# Version: .*/, versionComment);
+
+  // Update actual version = "x.y.z" in the [project] section of pyproject.toml
+  // If the [project] section doesn't exist, prepend it.
+  const projectSectionRegex = /^\[project\][\s\S]*?(?=^\[|\z)/m;
+  const projectMatch = pyprojectContent.match(projectSectionRegex);
+
+  if (projectMatch) {
+    let projectBlock = projectMatch[0];
+
+    if (/^\s*version\s*=.*/m.test(projectBlock)) {
+      // replace existing version line
+      projectBlock = projectBlock.replace(/^\s*version\s*=.*$/m, `version = "${newVersion}"`);
+    } else {
+      // insert version after the [project] header or after the name field if present
+      const lines = projectBlock.split('\n');
+      let insertAt = 1; // after [project]
+      for (let i = 1; i < lines.length; i++) {
+        if (/^\s*name\s*=/.test(lines[i])) { insertAt = i + 1; break; }
+      }
+      lines.splice(insertAt, 0, `version = "${newVersion}"`);
+      projectBlock = lines.join('\n');
+    }
+
+    pyprojectContent = pyprojectContent.replace(projectSectionRegex, projectBlock);
   } else {
-    pyprojectContent = versionComment + '\n' + pyprojectContent;
+    // No [project] section; prepend one with version
+    pyprojectContent = `[project]\nversion = "${newVersion}"\n\n` + pyprojectContent;
   }
-  
+
   fs.writeFileSync(PACKAGES.python, pyprojectContent);
-  console.log(`✅ Updated Python package version comment to ${newVersion}`);
-  console.log(`ℹ️  Python uses setuptools_scm for automatic versioning from git tags`);
+  console.log(`✅ Updated Python package version to ${newVersion} in ${PACKAGES.python}`);
 }
 
 function syncVersions(targetVersion = null) {
@@ -91,9 +109,14 @@ function validateVersions() {
   
   // Check Python version comment
   const pyprojectContent = fs.readFileSync(PACKAGES.python, 'utf8');
-  const pythonMatch = pyprojectContent.match(/# Version: (.*)/);
-  const pythonVersion = pythonMatch ? pythonMatch[1] : 'Not found';
-  console.log(`📦 Python: ${pythonVersion} (comment only - uses git tags)`);
+  let pythonVersion = 'Not found';
+  const projectSectionRegex = /^\[project\][\s\S]*?(?=^\[|\z)/m;
+  const projectMatch = pyprojectContent.match(projectSectionRegex);
+  if (projectMatch) {
+    const versionMatch = projectMatch[0].match(/^\s*version\s*=\s*["']([^"']+)["']/m);
+    if (versionMatch) pythonVersion = versionMatch[1];
+  }
+  console.log(`📦 Python: ${pythonVersion} (from pyproject.toml)`);
   
   // Validate consistency
   const allVersions = [nodeVersion, dotnetVersion];
