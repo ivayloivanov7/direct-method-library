@@ -14,7 +14,10 @@
     "install:all": "npm install && npm run install:python && npm run install:dotnet",
     "install:python": "cd packages/sdk-python && pip install -e .",
     "install:dotnet": "cd packages/sdk-dotnet && dotnet restore",
-    "version:sync": "node tools/version-sync.js"
+    "version:validate": "node tools/version-sync.js validate",
+    "version:sync": "node tools/version-sync.js sync",
+    "version:sync:to": "node tools/version-sync.js sync",
+    "version:help": "node tools/version-sync.js help"
   },
   "repository": {
     "type": "git",
