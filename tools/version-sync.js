@@ -39,6 +39,14 @@ function updateNodeJsVersion(newVersion) {
   console.log(`✅ Updated Node.js package to version ${newVersion}`);
 }
 
+function updateRootVersion(newVersion) {
+  const rootPkgPath = path.resolve(process.cwd(), 'package.json');
+  const pkg = JSON.parse(fs.readFileSync(rootPkgPath, 'utf8'));
+  pkg.version = newVersion;
+  fs.writeFileSync(rootPkgPath, JSON.stringify(pkg, null, 2) + '\n');
+  console.log(`✅ Updated root package.json version to ${newVersion}`);
+}
+
 function updateDotNetVersion(newVersion) {
   let csprojContent = fs.readFileSync(PACKAGES.dotnet, 'utf8');
   
@@ -97,8 +105,13 @@ function syncVersions(targetVersion = null) {
   console.log(`📦 packages/sdk-node version: ${sdkNodeVersion}`);
 
   // Always ensure the SDK Node package.json matches the versionToUse
-  if (sdkNodeVersion !== versionToUse) {
-    updateNodeJsVersion(versionToUse);
+    if (targetVersion && targetVersion !== currentVersion) {
+      // Update root package.json first so it's the canonical source going forward
+      updateRootVersion(targetVersion);
+      // refresh currentVersion to the updated root
+      // (not strictly necessary here since we use versionToUse below)
+      // ensure sdk-node is updated as well
+      updateNodeJsVersion(targetVersion);
   }
 
   updateDotNetVersion(versionToUse);

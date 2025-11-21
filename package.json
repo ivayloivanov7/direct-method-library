@@ -1,6 +1,6 @@
 {
   "name": "direct-method-library",
-  "version": "1.0.0",
+  "version": "1.2.1",
   "description": "Multi-platform MQTT client library showcasing best practices for organizing code across different programming languages",
   "private": true,
   "workspaces": [

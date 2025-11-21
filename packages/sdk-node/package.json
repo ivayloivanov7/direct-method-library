@@ -1,6 +1,6 @@
 {
   "name": "direct-method-mqtt-client",
-  "version": "1.0.0",
+  "version": "1.2.1",
   "description": "MQTT client implementation for Node.js/TypeScript - part of Direct Method Library",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
