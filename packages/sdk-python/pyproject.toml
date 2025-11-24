@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "direct-method-mqtt-python"
-version = "1.2.2"
+version = "1.2.3"
 description = "MQTT client implementation for Python - part of Direct Method Library"
 readme = "README.md"
 license = {text = "MIT"}
