@@ -53,3 +53,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated all packages to version ${VERSION}
 
+## [${VERSION}] - ${DATE}
+
+### Added
+- Released version ${VERSION} of all platform packages
+- Python: direct-method-mqtt-python v${VERSION}
+- Node.js: direct-method-mqtt-client v${VERSION}
+- .NET: DirectMethod.Mqtt.Client v${VERSION}
+
+### Changed
+- Updated all packages to version ${VERSION}
+
