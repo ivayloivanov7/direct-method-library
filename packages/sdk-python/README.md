@@ -22,6 +22,33 @@ pip install direct-method-mqtt-python
 # Or for development: pip install -e .
 ```
 
+## Developer setup
+
+For contributor-friendly development, we recommend creating a local virtual environment named `.venv` inside the package directory and installing the project plus dev dependencies there.
+
+From the `packages/sdk-python` directory run:
+
+```bash
+# create and activate a local virtualenv
+python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+
+# make sure pip/tools are up-to-date
+python -m pip install --upgrade pip setuptools wheel
+
+# install the package for development plus dev dependencies (if defined in pyproject or extras)
+# If you maintain a dev requirements file, use: pip install -r requirements-dev.txt
+pip install -e .[dev] || pip install -e .
+
+# when done: deactivate
+# deactivate
+```
+
+Notes:
+- Do NOT commit `.venv` to the repository; it is already ignored by `.gitignore`.
+- Use `pip install -r requirements-dev.txt` if you prefer a pinned, shareable developer environment (recommended for teams).
+- CI creates its own ephemeral environments; the local `.venv` is solely for developer ergonomics.
+
 ## Quick Start
 
 ```python
